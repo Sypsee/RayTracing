@@ -40,7 +40,6 @@ bool Camera::OnUpdate(GLFWwindow *window, float ts)
 	{
 		m_Position += m_ForwardDirection * speed * ts;
 		moved = true;
-		std::cout << "W\n";
 	}
 	else if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
 	{
@@ -84,7 +83,7 @@ bool Camera::OnUpdate(GLFWwindow *window, float ts)
 	if (moved)
 	{
 		RecalculateView();
-		RecalculateRayDirections();
+		//RecalculateRayDirections();
 	}
 
 	return moved;
@@ -99,7 +98,7 @@ void Camera::OnResize(uint32_t width, uint32_t height)
 	m_ViewportHeight = height;
 
 	RecalculateProjection();
-	RecalculateRayDirections();
+	//RecalculateRayDirections();
 }
 
 void Camera::mouse_callback(GLFWwindow* window, double xpos, double ypos)

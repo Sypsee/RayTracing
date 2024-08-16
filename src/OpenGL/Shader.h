@@ -22,6 +22,7 @@ public:
 	void setI(const char* u_name, float v1);
 	void setVec3(const char* u_name, glm::vec3 val);
 	void setVec3(const char* u_name, int size, glm::vec3 val);
+	void setVec4(const char* u_name, glm::vec4 val);
 	void setMat4(const char* u_name, glm::mat4 val);
 
 private:

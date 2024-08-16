@@ -3,16 +3,19 @@ out vec4 FragColor;
 
 in vec3 FragPos;
 
-uniform vec3 rayDirArray[360000];
+uniform vec3 rayOrigin;
+uniform mat4 inverseProjection;
+uniform mat4 inverseView;
 
-vec3 rayOrigin = vec3(0.0, 0.0, -1.5);
+vec3 rayDir;
 float radius = 0.5;
 
 vec3 lightDir = normalize(vec3(1, 1, -1));
 
 void main()
 {
-	vec3 rayDir = rayDirArray[int(FragPos.x) + int(FragPos.y) * 600];
+	vec4 target = inverseProjection * vec4(FragPos.x, FragPos.y, 1, 1);
+	rayDir = vec3(inverseView * vec4(normalize(vec3(target) / target.w), 0));
 	float a = dot(rayDir, rayDir);
 	float b = 2.0 * dot(rayOrigin, rayDir);
 	float c = dot(rayOrigin, rayOrigin) - radius;

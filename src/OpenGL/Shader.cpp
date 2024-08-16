@@ -122,6 +122,12 @@ void Shader::setVec3(const char* u_name, int size, glm::vec3 val)
     glUniform3fv(GetUniformLocation(u_name), size, glm::value_ptr(val));
 }
 
+void Shader::setVec4(const char* u_name, glm::vec4 val)
+{
+	glUseProgram(shaderId);
+	glUniform4fv(GetUniformLocation(u_name), 1, glm::value_ptr(val));
+}
+
 void Shader::setMat4(const char* u_name, glm::mat4 val)
 {
     glUseProgram(shaderId);

@@ -82,7 +82,9 @@ int main()
 		glClearColor(0.05f, 0.15f, 0.15f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		screenShader.setVec3("rayDirArray", 360000, cam.GetRayDirections()[0]);
+		screenShader.setMat4("inverseProjection", cam.GetInverseProjection());
+		screenShader.setMat4("inverseView", cam.GetInverseView());
+		screenShader.setVec3("rayOrigin", cam.GetPosition());
 		cam.OnUpdate(window, deltaTime);
 
 		glBindVertexArray(VAO);
