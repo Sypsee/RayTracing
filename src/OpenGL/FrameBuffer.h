@@ -5,12 +5,14 @@
 class Framebuffer
 {
 public:
-	Framebuffer(const int widht, const int height);
+	Framebuffer(const int width, const int height);
 	~Framebuffer();
 
 	void Bind() const;
 	void UnBind() const;
+	void WriteTex(const int width, const int height);
+	void ClearTex(const int width, const int height);
 
 private:
-	unsigned int m_texID, m_fboID, m_RboID;
+	unsigned int m_texID, m_fboID;
 };

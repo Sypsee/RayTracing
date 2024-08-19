@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-Framebuffer::Framebuffer(const int widht, const int height)
+Framebuffer::Framebuffer(const int width, const int height)
 {
 	glGenFramebuffers(1, &m_fboID);
 	glBindFramebuffer(GL_FRAMEBUFFER, m_fboID);
@@ -10,30 +10,24 @@ Framebuffer::Framebuffer(const int widht, const int height)
 	glGenTextures(1, &m_texID);
 	glBindTexture(GL_TEXTURE_2D, m_texID);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 800, 600, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glBindTexture(GL_TEXTURE_2D, 0);
 
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, m_texID, 0);
-
-	glGenRenderbuffers(1, &m_RboID);
-	glBindRenderbuffer(GL_RENDERBUFFER, m_RboID);
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, 800, 600);
-	glBindRenderbuffer(GL_RENDERBUFFER, 0);
-
-	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_RboID);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_texID, 0);
 
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 	{
 		std::cerr << "Error while creating frame buffer!\n";
 	}
+
+	glBindFramebuffer(m_fboID, 0);
 }
 
 Framebuffer::~Framebuffer()
 {
 	glDeleteFramebuffers(1, &m_fboID);
-	glDeleteRenderbuffers(1, &m_RboID);
 	glDeleteTextures(1, &m_texID);
 }
 
@@ -46,4 +40,30 @@ void Framebuffer::Bind() const
 void Framebuffer::UnBind() const
 {
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+void Framebuffer::WriteTex(const int width, const int height)
+{
+	this->Bind();
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_texID, 0);
+}
+
+void Framebuffer::ClearTex(const int width, const int height)
+{
+	this->Bind();
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);
+
+	this->UnBind();
 }

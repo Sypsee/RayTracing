@@ -113,20 +113,6 @@ int main()
 
 		std::cout << deltaTime << "\n";
 
-		if (isLastFrame)
-		{
-			isLastFrame = false;
-			fbo.Bind();
-			numAccumulatedFrames++;
-		}
-		else
-		{
-			isLastFrame = true;
-		}
-
-		glClearColor(0.05f, 0.15f, 0.15f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
-
 		screenShader.setMat4("inverseProjection", cam.GetInverseProjection());
 		screenShader.setMat4("inverseView", cam.GetInverseView());
 		screenShader.setVec3("rayOrigin", cam.GetPosition());
@@ -175,12 +161,34 @@ int main()
 			}
 		}
 
-		cam.OnUpdate(window, deltaTime);
+		if (isLastFrame)
+		{
+			isLastFrame = false;
+			numAccumulatedFrames++;
+
+			fbo.WriteTex(WIDTH, HEIGHT);
+
+			glBindVertexArray(VAO);
+			glDrawArrays(GL_TRIANGLES, 0, 6);
+
+			fbo.UnBind();
+		}
+		else
+		{
+			isLastFrame = true;
+		}
+
+		glClearColor(0.05f, 0.15f, 0.15f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT);
+
+		if (cam.OnUpdate(window, deltaTime))
+		{
+			numAccumulatedFrames = 1;
+			fbo.ClearTex(WIDTH, HEIGHT);
+		}
 
 		glBindVertexArray(VAO);
 		glDrawArrays(GL_TRIANGLES, 0, 6);
-
-		fbo.UnBind();
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
