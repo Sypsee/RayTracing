@@ -23,12 +23,14 @@ static bool GLLogCall(const char* function, const char* file, int line)
 	return true;
 }
 
-Framebuffer::Framebuffer(const int width, const int height)
+Framebuffer::Framebuffer(const int width, const int height, const int colAttIndex, const int texIndex)
+	:m_texIndex(texIndex)
 {
 	GLCall(glGenFramebuffers(1, &m_fboID));
 	GLCall(glBindFramebuffer(GL_FRAMEBUFFER, m_fboID));
 
 	GLCall(glGenTextures(1, &m_texID));
+	glActiveTexture(GL_TEXTURE0 + texIndex);
 	GLCall(glBindTexture(GL_TEXTURE_2D, m_texID));
 
 	GLCall(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, NULL));
@@ -36,7 +38,7 @@ Framebuffer::Framebuffer(const int width, const int height)
 	GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
 	GLCall(glBindTexture(GL_TEXTURE_2D, 0));
 
-	GLCall(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_texID, 0));
+	GLCall(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + colAttIndex, GL_TEXTURE_2D, m_texID, 0));
 
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 	{
@@ -54,12 +56,37 @@ Framebuffer::~Framebuffer()
 
 void Framebuffer::Bind() const
 {
-	GLCall(glBindTexture(GL_TEXTURE_2D, m_texID));
 	GLCall(glBindFramebuffer(GL_FRAMEBUFFER, m_fboID));
 }
 
 void Framebuffer::UnBind() const
 {
-	GLCall(glBindTexture(GL_TEXTURE_2D, 0));
 	GLCall(glBindFramebuffer(GL_FRAMEBUFFER, 0));
+}
+
+void Framebuffer::BindTex() const
+{
+	glActiveTexture(GL_TEXTURE0 + m_texIndex);
+	GLCall(glBindTexture(GL_TEXTURE_2D, m_texID));
+}
+
+void Framebuffer::UnBindTex() const
+{
+	GLCall(glBindTexture(GL_TEXTURE_2D, 0));
+}
+
+void Framebuffer::copyBufferTex(unsigned int fboOut, unsigned int texOut, const int width, const int height)
+{
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fboID);
+	glFramebufferTexture2D(GL_READ_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_texID, 0);
+	glReadBuffer(GL_COLOR_ATTACHMENT0);
+
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fboOut);
+	glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, texOut, 0);
+	glDrawBuffer(GL_COLOR_ATTACHMENT1);
+
+	glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, 0, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);
 }

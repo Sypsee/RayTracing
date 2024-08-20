@@ -77,11 +77,10 @@ int main()
 	glfwSetCursorPosCallback(window, mouse_callback);
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
-	Framebuffer fbo(WIDTH, HEIGHT);
+	Framebuffer fbo1(WIDTH, HEIGHT);
+	Framebuffer fbo2(WIDTH, HEIGHT, 1, 1);
 	bool isLastFrame = true;
 	int numAccumulatedFrames = 0;
-
-	screenShader.setI("prevFrame", 0);
 
 	Sphere sphere;
 	sphere.radius = 1;
@@ -162,33 +161,32 @@ int main()
 			}
 		}
 
-		if (isLastFrame)
-		{
-			isLastFrame = false;
+		fbo1.Bind();
+		fbo1.BindTex();
 
-			fbo.Bind();
+		glBindVertexArray(VAO);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		numAccumulatedFrames++;
 
-			glBindVertexArray(VAO);
-			glDrawArrays(GL_TRIANGLES, 0, 6);
-			numAccumulatedFrames++;
+		fbo1.copyBufferTex(fbo2.getFboID(), fbo2.getTexID(), WIDTH, HEIGHT);
 
-			fbo.UnBind();
-		}
-		else
-		{
-			isLastFrame = true;
-		}
+		fbo2.Bind();
+		fbo1.BindTex();
 
 		screenShader.setI("num_accumulated_frames", numAccumulatedFrames);
+		screenShader.setI("prevFrame", 0);
 
 		if (cam.OnUpdate(window, deltaTime))
 		{
-			numAccumulatedFrames = 0; // 0 == show the current frame only
+			numAccumulatedFrames = 1;
 			screenShader.setI("num_accumulated_frames", numAccumulatedFrames);
 		}
 
 		glBindVertexArray(VAO);
 		glDrawArrays(GL_TRIANGLES, 0, 6);
+		
+		fbo1.UnBindTex();
+		fbo2.UnBindTex();
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
