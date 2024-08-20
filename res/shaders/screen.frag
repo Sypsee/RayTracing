@@ -97,16 +97,16 @@ void main()
 	ray.dir = vec3(inverseView * vec4(normalize(vec3(target) / target.w), 0));
 	
 	vec3 finalColor;
-	float multiplier = 1.0;
 
-	int bounces = 10;
+	float multiplier = 1.0;
+	int bounces = 5;
 	for (int i=0; i<bounces; i++)
 	{
 		HitPayload result = closestSphereIntersection(ray);
 
 		if (result.sphereIndex == -1 || result.hitDistance < 0)
 		{
-			finalColor += vec3(0.6,0.7,0.9) * multiplier;
+			finalColor += vec3(0,0,0) * multiplier;
 			break;
 		}
 
@@ -123,7 +123,10 @@ void main()
 		ray.dir = reflect(ray.dir, result.worldNormal + materials[spheres[result.sphereIndex].matIndex].roughness * rnd);
 	}
 
-	finalColor = mix(texture(prevFrame, FragPos.xy / screenRes).xyz, finalColor, 1/num_accumulated_frames);
+	if (num_accumulated_frames > 0)
+	{
+		finalColor = mix(texture(prevFrame, FragPos.xy / screenRes).xyz, finalColor, 1/num_accumulated_frames);
+	}
 
-	FragColor = vec4(finalColor,1);
+	FragColor = texture(prevFrame, FragPos.xy / screenRes);
 }

@@ -2,27 +2,48 @@
 
 #include <iostream>
 
+#define ASSERT(x) if (!(x)) __debugbreak();
+#define GLCall(x) GLClearError();\
+	x;\
+	ASSERT(GLLogCall(#x, __FILE__, __LINE__))
+
+static void GLClearError()
+{
+	while (glGetError() != GL_NO_ERROR);
+}
+
+static bool GLLogCall(const char* function, const char* file, int line)
+{
+	while (GLenum error = glGetError())
+	{
+		std::cout << "[OpenGL Error] (" << error << "): " << function << " " << file << "\n";
+		return false;
+	}
+
+	return true;
+}
+
 Framebuffer::Framebuffer(const int width, const int height)
 {
-	glGenFramebuffers(1, &m_fboID);
-	glBindFramebuffer(GL_FRAMEBUFFER, m_fboID);
+	GLCall(glGenFramebuffers(1, &m_fboID));
+	GLCall(glBindFramebuffer(GL_FRAMEBUFFER, m_fboID));
 
-	glGenTextures(1, &m_texID);
-	glBindTexture(GL_TEXTURE_2D, m_texID);
+	GLCall(glGenTextures(1, &m_texID));
+	GLCall(glBindTexture(GL_TEXTURE_2D, m_texID));
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glBindTexture(GL_TEXTURE_2D, 0);
+	GLCall(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, NULL));
+	GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+	GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+	GLCall(glBindTexture(GL_TEXTURE_2D, 0));
 
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_texID, 0);
+	GLCall(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_texID, 0));
 
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 	{
 		std::cerr << "Error while creating frame buffer!\n";
 	}
 
-	glBindFramebuffer(m_fboID, 0);
+	GLCall(glBindFramebuffer(GL_FRAMEBUFFER, 0));
 }
 
 Framebuffer::~Framebuffer()
@@ -33,10 +54,12 @@ Framebuffer::~Framebuffer()
 
 void Framebuffer::Bind() const
 {
-	glBindFramebuffer(GL_FRAMEBUFFER, m_fboID);
+	GLCall(glBindTexture(GL_TEXTURE_2D, m_texID));
+	GLCall(glBindFramebuffer(GL_FRAMEBUFFER, m_fboID));
 }
 
 void Framebuffer::UnBind() const
 {
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	GLCall(glBindTexture(GL_TEXTURE_2D, 0));
+	GLCall(glBindFramebuffer(GL_FRAMEBUFFER, 0));
 }
