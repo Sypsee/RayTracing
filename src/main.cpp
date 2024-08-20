@@ -78,8 +78,8 @@ int main()
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
 	Framebuffer fbo(WIDTH, HEIGHT);
-	bool isLastFrame=true;
-	int numAccumulatedFrames=0;
+	bool isLastFrame = true;
+	int numAccumulatedFrames = 0;
 
 	Sphere sphere;
 	sphere.radius = 1;
@@ -111,13 +111,11 @@ int main()
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
 
-		std::cout << deltaTime << "\n";
+		std::cout << deltaTime*1000 << "ms\n";
 
 		screenShader.setMat4("inverseProjection", cam.GetInverseProjection());
 		screenShader.setMat4("inverseView", cam.GetInverseView());
 		screenShader.setVec3("rayOrigin", cam.GetPosition());
-		screenShader.setI("num_accumulated_frames", numAccumulatedFrames);
-		screenShader.setI("prevFrame", 0);
 		screenShader.setVec2("screenRes", glm::vec2(WIDTH, HEIGHT));
 
 		screenShader.setF("time", currentFrame);
@@ -166,10 +164,13 @@ int main()
 			isLastFrame = false;
 			numAccumulatedFrames++;
 
-			fbo.WriteTex(WIDTH, HEIGHT);
+			fbo.Bind();
 
 			glBindVertexArray(VAO);
 			glDrawArrays(GL_TRIANGLES, 0, 6);
+
+			screenShader.setI("num_accumulated_frames", numAccumulatedFrames);
+			screenShader.setI("prevFrame", 0);
 
 			fbo.UnBind();
 		}
@@ -184,7 +185,6 @@ int main()
 		if (cam.OnUpdate(window, deltaTime))
 		{
 			numAccumulatedFrames = 1;
-			fbo.ClearTex(WIDTH, HEIGHT);
 		}
 
 		glBindVertexArray(VAO);
