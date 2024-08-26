@@ -123,7 +123,7 @@ void main()
 		ray.dir = reflect(ray.dir, result.worldNormal + materials[spheres[result.sphereIndex].matIndex].roughness * rnd);
 	}
 
-	finalColor = mix(texture(prevFrame, FragPos.xy / screenRes).xyz, finalColor, 1/num_accumulated_frames);finalColor = mix(texture(prevFrame, FragPos.xy / screenRes).xyz, finalColor, 1/num_accumulated_frames);
+	finalColor = mix(texture(prevFrame, FragPos.xy / screenRes).xyz, finalColor, 1/float(num_accumulated_frames));
 
-	FragColor = texture(prevFrame, FragPos.xy / screenRes);
+	FragColor = vec4(finalColor, 1);
 }

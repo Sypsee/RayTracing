@@ -77,16 +77,16 @@ void Framebuffer::UnBindTex() const
 
 void Framebuffer::copyBufferTex(unsigned int fboOut, unsigned int texOut, const int width, const int height)
 {
-	glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fboID);
-	glFramebufferTexture2D(GL_READ_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_texID, 0);
-	glReadBuffer(GL_COLOR_ATTACHMENT0);
+	GLCall(glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fboID));
+	GLCall(glFramebufferTexture2D(GL_READ_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_texID, 0));
+	GLCall(glReadBuffer(GL_COLOR_ATTACHMENT0));
 
-	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fboOut);
-	glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, texOut, 0);
-	glDrawBuffer(GL_COLOR_ATTACHMENT1);
+	GLCall(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fboOut));
+	GLCall(glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, texOut, 0));
+	GLCall(glDrawBuffer(GL_COLOR_ATTACHMENT1));
 
-	glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+	GLCall(glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST));
 
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, 0, 0);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);
+	GLCall(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, 0, 0));
+	GLCall(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0));
 }

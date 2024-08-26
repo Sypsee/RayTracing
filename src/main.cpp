@@ -77,8 +77,8 @@ int main()
 	glfwSetCursorPosCallback(window, mouse_callback);
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
-	Framebuffer fbo1(WIDTH, HEIGHT);
-	Framebuffer fbo2(WIDTH, HEIGHT, 1, 1);
+	Framebuffer fbo1(WIDTH, HEIGHT, 0, 0);
+	Framebuffer fbo2(WIDTH, HEIGHT, 1, 0);
 	bool isLastFrame = true;
 	int numAccumulatedFrames = 0;
 
@@ -113,7 +113,7 @@ int main()
 		lastFrame = currentFrame;
 
 		//system("cls"); // temp
-		std::cout << deltaTime * 1000 << "ms\n";
+		//std::cout << deltaTime * 1000 << "ms\n";
 
 		screenShader.setMat4("inverseProjection", cam.GetInverseProjection());
 		screenShader.setMat4("inverseView", cam.GetInverseView());
@@ -161,17 +161,19 @@ int main()
 			}
 		}
 
-		fbo1.Bind();
-		fbo1.BindTex();
+		Framebuffer* f0 = numAccumulatedFrames % 2 == 0 ? &fbo1 : &fbo2;
+		Framebuffer* f1 = numAccumulatedFrames % 2 == 0 ? &fbo2 : &fbo1;
+
+		f1->Bind();
 
 		glBindVertexArray(VAO);
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 		numAccumulatedFrames++;
 
-		fbo1.copyBufferTex(fbo2.getFboID(), fbo2.getTexID(), WIDTH, HEIGHT);
+		f1->copyBufferTex(f0->getFboID(), f0->getTexID(), WIDTH, HEIGHT);
 
-		fbo2.Bind();
-		fbo1.BindTex();
+		f0->Bind();
+		f1->BindTex();
 
 		screenShader.setI("num_accumulated_frames", numAccumulatedFrames);
 		screenShader.setI("prevFrame", 0);
@@ -182,12 +184,15 @@ int main()
 			screenShader.setI("num_accumulated_frames", numAccumulatedFrames);
 		}
 
+		f1->UnBind();
+		f0->UnBind();
+
 		glBindVertexArray(VAO);
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 		
-		fbo1.UnBindTex();
-		fbo2.UnBindTex();
-
+		f0->UnBindTex();
+		f1->UnBindTex();
+		
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
