@@ -1,0 +1,1 @@
+/usr/bin/c++ CMakeFiles/game.dir/src/Application/Camera.cpp.o CMakeFiles/game.dir/src/OpenGL/Framebuffer.cpp.o CMakeFiles/game.dir/src/OpenGL/Shader.cpp.o CMakeFiles/game.dir/src/OpenGL/Texture.cpp.o CMakeFiles/game.dir/src/OpenGL/VertexBuffer.cpp.o CMakeFiles/game.dir/src/main.cpp.o CMakeFiles/game.dir/src/stb_image.cpp.o -o game  /usr/lib/libglfw.so.3.4 libglad.a -lglm

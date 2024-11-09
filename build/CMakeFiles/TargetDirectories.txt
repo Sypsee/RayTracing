@@ -1,0 +1,4 @@
+/home/sypse/dev/c/RayTracing/build/CMakeFiles/glad.dir
+/home/sypse/dev/c/RayTracing/build/CMakeFiles/game.dir
+/home/sypse/dev/c/RayTracing/build/CMakeFiles/edit_cache.dir
+/home/sypse/dev/c/RayTracing/build/CMakeFiles/rebuild_cache.dir
