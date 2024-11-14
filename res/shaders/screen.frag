@@ -7,7 +7,7 @@ in vec2 uv;
 #define MAX_SPHERES 10
 // #define MAX_MATERIALS 10
 #define FLT_MAX 69696969
-#define PI 3.14159265359
+#define PI 3.14159
 
 struct Material
 {
@@ -57,9 +57,6 @@ uniform sampler2D u_prevFrame;
 
 uint g_randomSeed = 0u;
 
-const int bounces = 10;
-const int samples = 10;
-
 void encryptTea(inout uvec2 arg)
 {
 	uvec4 key = uvec4(0xa341316c, 0xc8013ea4, 0xad90777d, 0x7e95761e);
@@ -88,6 +85,7 @@ uint wang_hash(inout uint seed)
 
 float getRandom()
 {
+	g_randomSeed += 1;
     return wang_hash(g_randomSeed) / 4294967295.0;
 }
 
@@ -145,7 +143,7 @@ HitPayload closestSphereIntersection(Ray ray)
 			continue;
 
 		float closestT = (-b - sqrt(discriminant)) / (2.0 * a);
-		if (closestT > 0 && closestT < hitPayload.hitDistance)
+		if (closestT > 0.001 && closestT < hitPayload.hitDistance)
 		{
 			hitPayload.hitDistance = closestT;
 			hitPayload.sphereIndex = i;
@@ -157,6 +155,7 @@ HitPayload closestSphereIntersection(Ray ray)
 
 			if (dot(ray.dir, hitPayload.worldNormal) > 0.0)
 			{
+				hitPayload.worldNormal = -hitPayload.worldNormal;
 				hitPayload.frontFace = false;
 			}
 			else
@@ -169,29 +168,25 @@ HitPayload closestSphereIntersection(Ray ray)
 	return hitPayload;
 }
 
-const float defocusStrength = 200.0;
-const float divergeStrength = 0.2;
+const int bounces = 10;
+const int samples = 10;
+
+const float defocusStrength = 15.0;
+const float divergeStrength = 2.0;
+const float defocusAngle = 10;
+const float focusDist = 10;
 const vec3 camUp = vec3(0, 1, 0);
 
-void main()
+vec3 trace(Ray ray)
 {
-	Ray ray;
-	vec2 defocusOffset = randomInCircle(1.0) * defocusStrength / u_screenRes.x;
-	ray.origin = u_rayOrigin + u_camRight * defocusOffset.x + camUp * defocusOffset.y;
-    vec2 offset = randomInCircle(1.0) * defocusOffset / u_screenRes.x;
-	vec4 target = u_inverseProjection * vec4(vec2(FragPos) + offset, 1, 1);
-	ray.dir = vec3(u_inverseView * vec4(normalize(vec3(target) / target.w), 0));
-	
 	vec3 light = vec3(0.0);
 	vec3 contribution = vec3(1.0);
-
-    g_randomSeed = uint((uv.y * u_screenRes.x + uv.x) + u_frames * 719393);
 
 	for (int i=0; i<bounces; i++)
 	{
 		HitPayload result = closestSphereIntersection(ray);
 
-		if (result.sphereIndex == -1 || result.hitDistance < 0)
+		if (result.sphereIndex == -1)
 		{
 			light += skycolor(normalize(ray.dir)) * contribution;
 			break;
@@ -200,7 +195,7 @@ void main()
 		vec3 rnd = vec3(getRandom(), getRandom(), getRandom());
 		vec3 randomInUnitSphere = randomInUnitSphere(rnd);
 
-		ray.origin = result.worldPos;
+		ray.origin = result.worldPos + result.worldNormal * 0.0001;
 		vec3 diffuseDir = vec3(1);
 		Material material = u_materials[u_spheres[result.sphereIndex].matIndex];
 		bool isSpecularBounce =  3 * material.smoothness >= convertRange(getRandom(), 1, 5);
@@ -209,18 +204,18 @@ void main()
 		if (material.refractiveIndex <= 0) // Is object diletric?
 		{
 			contribution *= mix(material.albedo, vec3(1), float(isSpecularBounce));
-			diffuseDir = reflect(ray.dir, result.worldNormal + randomInUnitSphere);
+			diffuseDir = normalize(result.worldNormal + randomInUnitSphere);
 		}
 		else
 		{
 			contribution *= vec3(1);
 			float ri = result.frontFace ? 1/material.refractiveIndex : material.refractiveIndex;
-			float cosTheta = dot(ray.dir, result.worldNormal);
-			float sinTheta = sqrt(1 - (cosTheta * cosTheta));
+			float cosTheta = min(dot(ray.dir, result.worldNormal), 1.0);
+			float sinTheta = sqrt(1.0 - (cosTheta * cosTheta));
 
-			if (ri * sinTheta > 1.0 || reflectance(cosTheta, ri) > 40 * getRandom())
+			if ((ri * sinTheta > 1.0 || reflectance(cosTheta, ri) > 25*getRandom()))
 			{
-				diffuseDir = reflect(ray.dir, result.worldNormal + randomInUnitSphere);
+				diffuseDir = reflect(ray.dir, result.worldNormal);
 			}
 			else
 			{
@@ -232,7 +227,31 @@ void main()
 		ray.dir = mix(diffuseDir, specularDir, material.smoothness * float(isSpecularBounce));
 	}
 
-	vec3 finalColor = light;
+	return light;
+}
+
+void main()
+{
+	Ray ray;
+	
+	vec4 target = u_inverseProjection * vec4(vec2(FragPos), 1, 1);
+	g_randomSeed = uint((uv.y * u_screenRes.x + uv.x) + u_frames * 719393);
+
+	vec3 totalLight = vec3(0.0);
+
+	for (int j = 0; j < samples; j++)
+	{
+		vec2 defocusOffset = randomInCircle(1.0) * defocusStrength / u_screenRes.x;
+		vec2 divergeOffset = randomInCircle(1.0) * divergeStrength / u_screenRes.x;
+		vec3 divergedDir = target.xyz + u_camRight * divergeOffset.x + camUp * divergeOffset.y;
+
+		ray.origin = u_rayOrigin + u_camRight * defocusOffset.x + camUp * defocusOffset.y;
+		ray.dir = vec3(u_inverseView * vec4(normalize(vec3(divergedDir) / target.w), 0));
+
+		totalLight += trace(ray);
+	}
+
+	vec3 finalColor = totalLight / samples;
 
 	if (u_directOutput && u_frames > 0)
 	{

@@ -8,6 +8,8 @@ Framebuffer::Framebuffer(CreateInfo const &createInfo)
 
     for (int i = 0; i < createInfo.attachements.size(); i++)
     {
+        if (createInfo.attachements[i].attachement == 0) { m_TexIDs.push_back(0); continue; }
+
         if (GL_COLOR_ATTACHMENT0 <= createInfo.attachements[i].attachement && createInfo.attachements[i].attachement <= GL_COLOR_ATTACHMENT31)
         {
             currentSizeX = createInfo.attachements[i].width;
@@ -19,7 +21,7 @@ Framebuffer::Framebuffer(CreateInfo const &createInfo)
 
             unsigned int m_Handle = 0;
             glCreateTextures(GL_TEXTURE_2D, 1, &m_Handle);
-            glBindTextureUnit(0, m_Handle);
+            glBindTextureUnit(i, m_Handle);
 
             createTextureChain(m_Handle);
             glViewport(0, 0, createInfo.attachements[i].width, createInfo.attachements[i].height);
@@ -70,13 +72,14 @@ void Framebuffer::createTextureChain(unsigned int &texId, const bool recreate, c
         glDeleteTextures(1, &texId);
 
         glCreateTextures(GL_TEXTURE_2D, 1, &texId);
-        glBindTextureUnit(0, texId);
+        const auto index = std::find(m_TexIDs.begin(), m_TexIDs.end(), texId) - m_TexIDs.begin();
+        glBindTextureUnit(index, texId);
     }
 
     glTextureParameteri(texId, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTextureParameteri(texId, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    glTextureStorage2D(texId, chainDepth, GL_RGB32F, currentSizeX, currentSizeY);
+    glTextureStorage2D(texId, chainDepth, GL_RGBA32F, currentSizeX, currentSizeY);
 
     if (recreate)
     {
@@ -125,7 +128,7 @@ void Framebuffer::bindTex(const int i) const
 
 void Framebuffer::bindImage(const int i, const int unit) const
 {
-    glBindImageTexture(unit, m_TexIDs[i], 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA16F);
+    glBindImageTexture(unit, m_TexIDs[i], 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
 }
 
 void Framebuffer::bindDepthTex(const int i) const
